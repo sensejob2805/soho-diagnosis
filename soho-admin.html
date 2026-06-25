@@ -1,1 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강사 대시보드 | 소상공인 새출발 진단</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyB8g1dCEwJ5FrE9c6a4hVEONQdOwTsQ8hU",
+    authDomain: "nohoo-diagnosis.firebaseapp.com",
+    projectId: "nohoo-diagnosis",
+    storageBucket: "nohoo-diagnosis.firebasestorage.app",
+    messagingSenderId: "719141943540",
+    appId: "1:719141943540:web:c9b29f194ba451a0e186a1"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db=db; window._fbReady=true;
+  window._getDocs=getDocs; window._collection=collection;
+  window._doc=doc; window._deleteDoc=deleteDoc; window._onSnapshot=onSnapshot;
+</script>
+<style>
+:root{
+  --primary:#1B3F6E;--primary-mid:#2A5FA0;--primary-light:#E8F0FA;
+  --gold:#E8A020;
+  --ink:#1A1A1A;--ink-mid:#4A4A4A;--ink-light:#8A8A8A;
+  --line:#E8E8E8;--bg:#F5F6F8;--white:#FFFFFF;
+  --good:#2E7D5A;--good-bg:#EAF5EE;--good-border:#A8D8BC;
+  --warn:#B06000;--warn-bg:#FDF3E3;--warn-border:#F0C070;
+  --danger:#B03030;--danger-bg:#FAEAEA;--danger-border:#F0A0A0;
+  --r:10px;--r-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#071828 0%,var(--primary) 55%,#2A5FA0 100%);position:relative;overflow:hidden}
+.login-page::before{content:'';position:absolute;top:-30%;right:-20%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,32,.1),transparent 70%)}
+.login-card{background:rgba(255,255,255,.97);border-radius:24px;padding:3rem 2.5rem;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.3);position:relative;z-index:1}
+.login-top{text-align:center;margin-bottom:2.5rem}
+.login-emblem{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-mid));display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 24px rgba(27,63,110,.3)}
+.login-emblem svg{width:34px;height:34px;fill:none;stroke:#fff;stroke-width:2}
+.login-brand{font-size:12px;font-weight:600;letter-spacing:2px;color:var(--ink-light);text-transform:uppercase;margin-bottom:.5rem}
+.login-title{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.5px;margin-bottom:.3rem}
+.login-sub{font-size:14px;color:var(--ink-light)}
+.login-field label{display:block;font-size:12px;font-weight:700;color:var(--ink-mid);letter-spacing:.5px;margin-bottom:.5rem;text-transform:uppercase}
+.login-input{width:100%;padding:16px 18px;background:#F8F7F5;border:2px solid var(--line);border-radius:var(--r);font-size:20px;text-align:center;letter-spacing:8px;outline:none;font-family:inherit;color:var(--ink);transition:all .2s}
+.login-input:focus{border-color:var(--primary);background:#fff}
+.login-err{font-size:13px;color:var(--danger);text-align:center;min-height:20px;margin:.5rem 0}
+.login-btn{width:100%;padding:18px;background:linear-gradient(135deg,var(--primary),var(--primary-mid));color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(27,63,110,.3);transition:all .2s}
+.login-btn:hover{transform:translateY(-1px)}
+.login-footer{text-align:center;margin-top:1.5rem;font-size:12px;color:var(--ink-light)}
+.login-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* APP */
+.app{display:none;min-height:100vh;flex-direction:column}
+.app.active{display:flex}
+.topbar{background:linear-gradient(135deg,#071828,var(--primary));height:64px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.tb-left{display:flex;align-items:center;gap:14px}
+.tb-logo{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px}
+.tb-title{font-size:16px;font-weight:700;color:#fff}
+.tb-badge{font-size:11px;padding:3px 10px;border-radius:999px;background:rgba(232,160,32,.25);color:var(--gold);font-weight:600}
+.tb-right{display:flex;align-items:center;gap:8px}
+.tb-btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s;display:flex;align-items:center;gap:5px}
+.tb-btn:hover{opacity:.85}
+.tb-refresh{background:rgba(255,255,255,.12);color:#fff}
+.tb-csv{background:var(--gold);color:#1A1A00}
+.tb-print{background:rgba(255,255,255,.12);color:#fff}
+.tb-qr{background:rgba(255,255,255,.12);color:#fff}
+.tb-anon{background:rgba(255,255,255,.12);color:#fff}
+.tb-anon.on{background:rgba(232,160,32,.3);color:var(--gold)}
+.tb-logout{background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)}
+
+/* LIVE */
+.live-banner{background:linear-gradient(90deg,#071828,var(--primary),#071828);padding:.75rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+.live-left{display:flex;align-items:center;gap:1.5rem}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;animation:pulse 1.5s infinite;flex-shrink:0}
+.live-label{font-size:12px;color:rgba(255,255,255,.5);font-weight:500;letter-spacing:.5px}
+.live-count{font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px}
+.live-avg{font-size:22px;font-weight:900;letter-spacing:-1px}
+.live-unit{font-size:12px;color:rgba(255,255,255,.5);margin-left:3px}
+.live-sep{width:1px;height:32px;background:rgba(255,255,255,.12)}
+.live-right{font-size:12px;color:rgba(255,255,255,.4)}
+
+/* FILTERS */
+.filter-bar{background:var(--white);border-bottom:1px solid var(--line);padding:.75rem 2rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-label{font-size:12px;font-weight:700;color:var(--ink-mid);letter-spacing:.3px}
+.filter-select{padding:7px 12px;border:1.5px solid var(--line);border-radius:var(--r);font-size:13px;outline:none;font-family:inherit;background:var(--white);cursor:pointer;transition:border-color .2s}
+.filter-select:focus{border-color:var(--primary)}
+.filter-active{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.filter-clear{padding:7px 12px;border:1.5px solid var(--danger-border);border-radius:var(--r);font-size:13px;cursor:pointer;font-family:inherit;background:var(--white);color:var(--danger)}
+.filter-result{font-size:13px;color:var(--ink-light);margin-left:auto}
+
+/* ALERT */
+.alert-banner{margin:1.5rem 2rem 0;border-radius:var(--r-lg);padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;border:1px solid}
+.ab-icon{font-size:22px;flex-shrink:0}
+.ab-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.ab-desc{font-size:13px}
+
+/* MAIN */
+.main{flex:1;padding:1.5rem 2rem 3rem;max-width:1400px;width:100%;margin:0 auto}
+.metrics-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.metric-card{background:var(--white);border-radius:var(--r-lg);padding:1.25rem 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--line)}
+.metric-label{font-size:11px;color:var(--ink-light);font-weight:600;letter-spacing:.5px;margin-bottom:.5rem;text-transform:uppercase}
+.metric-value{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1}
+.metric-sub{font-size:12px;color:var(--ink-light);margin-top:.3rem}
+.tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--white);border-radius:var(--r-lg);padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--line);width:fit-content}
+.tab{padding:8px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--ink-light);font-family:inherit;transition:all .15s}
+.tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(27,63,110,.3)}
+.tab-content{display:none}.tab-content.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:1.5rem}
+.card{background:var(--white);border-radius:var(--r-lg);padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--line)}
+.card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:.25rem}
+.card-sub{font-size:12px;color:var(--ink-light);margin-bottom:1.25rem}
+.chart-wrap{position:relative;height:260px}
+.hl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem}
+.hl-box{border-radius:var(--r-lg);padding:1.1rem 1.25rem;border:1px solid}
+.s-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-nm{font-size:13px;color:var(--ink-mid);flex:0 0 80px;font-weight:500}
+.s-bar-bg{flex:1;height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.s-bar{height:100%;border-radius:999px}
+.s-val{font-size:14px;font-weight:700;width:28px;text-align:right}
+.qlist-row{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.qlist-row:last-child{border-bottom:none}
+.qlist-rank{font-size:13px;font-weight:900;width:20px;flex-shrink:0}
+.qlist-txt{font-size:13px;line-height:1.5;flex:1;color:var(--ink);word-break:keep-all}
+.qlist-meta{font-size:11px;color:var(--ink-light);margin-top:2px}
+.qlist-score{font-size:15px;font-weight:700;flex-shrink:0}
+
+/* TABLE */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.search-box{padding:8px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-size:13px;outline:none;font-family:inherit;min-width:180px;transition:border-color .2s}
+.search-box:focus{border-color:var(--primary)}
+.sort-btn{padding:7px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--white);font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s}
+.sort-btn.active{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.count-badge{font-size:13px;color:var(--ink-light);margin-left:auto}
+.table-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:#F0EFEc;padding:10px 14px;text-align:left;font-weight:700;color:var(--ink-mid);border-bottom:2px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+.tbl th:hover{background:#E8E7E4}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:hover td{background:#FAFAF8}
+.tbl tr:last-child td{border-bottom:none}
+.score-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.tag-pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.btn-detail{padding:5px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-mid);font-family:inherit;transition:all .15s}
+.btn-detail:hover{border-color:var(--primary);color:var(--primary)}
+.btn-del{padding:5px 10px;border:1.5px solid var(--danger-border);border-radius:6px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--danger);font-family:inherit}
+.btn-del:hover{background:var(--danger-bg)}
+.area-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.area-tab{padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;border:1.5px solid;cursor:pointer;background:var(--white);font-family:inherit;transition:all .15s}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:2rem}
+.modal-ov.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r-lg);width:100%;max-width:680px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--white);z-index:1}
+.modal-title{font-size:17px;font-weight:700}
+.modal-close{width:32px;height:32px;border:none;background:var(--line);border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:1.5rem}
+.modal-chart-wrap{height:240px;margin-bottom:1.5rem}
+.qr-modal-body{padding:2rem;text-align:center}
+.qr-wrap{display:inline-block;padding:20px;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.1);margin:1.5rem 0}
+
+/* DATE GROUP */
+.date-group-header{background:var(--primary-light);border-radius:var(--r);padding:.6rem 1rem;font-size:13px;font-weight:700;color:var(--primary);margin:12px 0 6px;display:flex;align-items:center;justify-content:space-between}
+.date-group-count{font-size:12px;color:var(--ink-light);font-weight:500}
+
+.spin{width:32px;height:32px;border:2.5px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:sp .7s linear infinite;margin:3rem auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:3rem;color:var(--ink-light);font-size:15px;line-height:1.75}
+
+@media print{
+  .topbar,.live-banner,.filter-bar,.toolbar,.tb-btn,.btn-del,.btn-detail,.modal-ov,.tabs{display:none!important}
+  .app{display:block!important}
+  .card{break-inside:avoid;box-shadow:none}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="login-top">
+      <div class="login-emblem">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="login-brand">Restart Compass</div>
+      <div class="login-title">강사 전용 대시보드</div>
+      <div class="login-sub">소상공인 새출발 진단 · 교육자 분석</div>
+    </div>
+    <div class="login-field" style="margin-bottom:1.25rem">
+      <label>비밀번호</label>
+      <input type="password" id="pwIn" class="login-input" placeholder="••••" maxlength="10" autocomplete="off">
+    </div>
+    <div class="login-err" id="pwErr"></div>
+    <button class="login-btn" onclick="checkLogin()">대시보드 입장</button>
+    <div class="login-footer"><span class="login-dot"></span>Firebase 실시간 연동 중</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appWrap">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo">📊</div>
+      <div class="tb-title">소상공인 새출발 대시보드</div>
+      <div class="tb-badge">Restart Compass</div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-btn tb-refresh" onclick="loadData()">🔄 새로고침</button>
+      <button class="tb-btn tb-qr" onclick="showQR()">📱 QR 코드</button>
+      <button class="tb-btn tb-anon" id="anonBtn" onclick="toggleAnon()">👁 익명 ON</button>
+      <button class="tb-btn tb-csv" onclick="exportCSV()">⬇ CSV</button>
+      <button class="tb-btn tb-print" onclick="window.print()">🖨️ 인쇄</button>
+      <button class="tb-btn tb-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- LIVE -->
+  <div class="live-banner">
+    <div class="live-left">
+      <div class="live-dot"></div>
+      <div><div class="live-label">LIVE · 실시간</div><div style="display:flex;align-items:baseline;gap:6px"><span class="live-count" id="liveCount">0</span><span class="live-unit">명 완료</span></div></div>
+      <div class="live-sep"></div>
+      <div><div class="live-label">전체 평균</div><div style="display:flex;align-items:baseline;gap:4px"><span class="live-avg" id="liveAvg" style="color:#4ADE80">--</span><span class="live-unit">점</span></div></div>
+      <div class="live-sep"></div>
+      <div><div class="live-label">최고</div><div style="display:flex;align-items:baseline;gap:4px"><span class="live-avg" id="liveMax" style="color:#E8A020">--</span><span class="live-unit">점</span></div></div>
+      <div class="live-sep"></div>
+      <div><div class="live-label">최저</div><div style="display:flex;align-items:baseline;gap:4px"><span class="live-avg" id="liveMin" style="color:#F87171">--</span><span class="live-unit">점</span></div></div>
+    </div>
+    <div class="live-right" id="liveTime">마지막 업데이트: --</div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">🔍 필터</span>
+    <select id="filterDate" class="filter-select" onchange="applyFilter()">
+      <option value="">날짜 전체</option>
+    </select>
+    <select id="filterRegion" class="filter-select" onchange="applyFilter()">
+      <option value="">지역 전체</option>
+    </select>
+    <select id="filterBiz" class="filter-select" onchange="applyFilter()">
+      <option value="">업종 전체</option>
+    </select>
+    <button class="filter-clear" onclick="clearFilter()">✕ 필터 초기화</button>
+    <div class="filter-result" id="filterResult"></div>
+  </div>
+
+  <div class="main" id="mainContent"><div class="spin"></div></div>
+</div>
+
+<!-- MODAL: 상세 -->
+<div class="modal-ov" id="modalOv" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="document.getElementById('modalOv').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- MODAL: QR -->
+<div class="modal-ov" id="qrOv" onclick="closeQR(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">📱 교육생 QR 코드</div>
+      <button class="modal-close" onclick="document.getElementById('qrOv').classList.remove('open')">✕</button>
+    </div>
+    <div class="qr-modal-body">
+      <div style="font-size:15px;font-weight:700;margin-bottom:.5rem">빔프로젝터에 띄워주세요</div>
+      <div style="font-size:13px;color:var(--ink-light);margin-bottom:1.25rem">교육생이 QR 스캔 → 바로 진단 시작</div>
+      <div class="qr-wrap"><div id="qrCode"></div></div>
+      <div style="font-size:13px;color:var(--ink-light);word-break:break-all;margin-bottom:1rem">sensejob2805.github.io/soho-diagnosis</div>
+      <div style="font-size:13px;color:var(--ink-light);line-height:1.6">📌 "결과 저장하기" 버튼을 눌러야<br>이 대시보드에 집계됩니다</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PW='1234';
+const STUDENT_URL='https://sensejob2805.github.io/soho-diagnosis';
+const AREAS=[
+  {n:'심리·정서 회복',l:'가',c:'#7B4F9E'},{n:'재무 재건',l:'나',c:'#1A6B8A'},
+  {n:'건강관리',l:'다',c:'#2A5C45'},{n:'재기 준비',l:'라',c:'#C0392B'},
+  {n:'여가·취미',l:'마',c:'#E67E22'},{n:'새출발 설계',l:'바',c:'#1B3F6E'},
+  {n:'관계관리',l:'사',c:'#27AE60'},{n:'주거·공간',l:'아',c:'#8E44AD'},
+];
+const QS_ORIG=[
+  {a:0,id:0,t:'폐업의 아픔과 실패감을 어느 정도 받아들이고 회복해 가고 있다.'},
+  {a:0,id:1,t:'폐업이 나의 전부가 아니며, 새출발할 수 있다는 희망을 갖고 있다.'},
+  {a:0,id:2,t:'사회적 시선이나 주변의 평가에 지나치게 흔들리지 않는 편이다.'},
+  {a:0,id:3,t:'나 자신의 가치와 강점이 폐업으로 사라지지 않았다고 믿는다.'},
+  {a:0,id:4,t:'힘든 상황에서도 나만의 감정 회복 방법을 갖고 있다.'},
+  {a:1,id:5,t:'폐업 후 부채·보증 등 재무 상황을 정확히 파악하고 있다.'},
+  {a:1,id:6,t:'생활비를 충당할 수 있는 최소한의 재원이 마련되어 있다.'},
+  {a:1,id:7,t:'채무 조정·재기 지원 등 이용 가능한 정책 제도를 알고 있다.'},
+  {a:1,id:8,t:'재기를 위한 자금 계획이나 수입 확보 방안을 구상하고 있다.'},
+  {a:1,id:9,t:'지출을 줄이고 생활 수준을 조정하는 것에 대비하고 있다.'},
+  {a:2,id:10,t:'폐업 과정의 스트레스로 건강이 나빠지지 않도록 관리하고 있다.'},
+  {a:2,id:11,t:'규칙적인 식사와 수면 등 기본적인 건강 습관을 유지하고 있다.'},
+  {a:2,id:12,t:'정신건강(우울·불안)에 대한 관리와 돌봄을 하고 있다.'},
+  {a:2,id:13,t:'몸을 움직이는 활동이나 운동을 꾸준히 하고 있다.'},
+  {a:2,id:14,t:'향후 의료비와 건강 유지에 필요한 비용을 준비하고 있다.'},
+  {a:3,id:15,t:'재취업, 재창업, 직업훈련 등 앞으로의 방향을 탐색하고 있다.'},
+  {a:3,id:16,t:'사업 운영 경험에서 배운 것과 나의 강점을 정리하고 있다.'},
+  {a:3,id:17,t:'재기에 필요한 기술이나 역량을 개발하기 위해 노력하고 있다.'},
+  {a:3,id:18,t:'재기 지원 기관이나 프로그램에 대해 알고 있거나 활용하고 있다.'},
+  {a:3,id:19,t:'새로운 일을 시작하기 위한 구체적인 계획을 세우고 있다.'},
+  {a:4,id:20,t:'사업에서 벗어나 개인적으로 즐길 수 있는 여가·취미 활동이 있다.'},
+  {a:4,id:21,t:'취미나 여가 활동을 통해 스트레스가 해소되고 삶의 활력을 느낀다.'},
+  {a:4,id:22,t:'여가나 취미를 함께 즐길 수 있는 사람이 주변에 있다.'},
+  {a:4,id:23,t:'좋아하는 일이 향후 소득이나 새로운 역할로 연결될 가능성을 본다.'},
+  {a:4,id:24,t:'여가·취미를 위한 시간과 비용을 마련할 여유가 있다.'},
+  {a:5,id:25,t:'폐업을 경험으로 받아들이고 새로운 삶의 방향을 설계하고 있다.'},
+  {a:5,id:26,t:'앞으로의 삶에 대한 구체적인 목표나 비전을 가지고 있다.'},
+  {a:5,id:27,t:'가족과 함께 앞으로의 생활에 대해 솔직하게 이야기하고 있다.'},
+  {a:5,id:28,t:'수입이 줄어드는 상황에서도 일상의 균형을 유지하려 노력한다.'},
+  {a:5,id:29,t:'이전과 다른 삶의 방식에 유연하게 적응하고 있다.'},
+  {a:6,id:30,t:'가족(배우자 포함)이 나의 상황을 이해하고 지지해 주고 있다.'},
+  {a:6,id:31,t:'폐업 후에도 연락하고 도움을 주고받을 수 있는 지인이 있다.'},
+  {a:6,id:32,t:'사회적 시선 때문에 고립되지 않도록 관계를 유지하고 있다.'},
+  {a:6,id:33,t:'재기에 도움이 될 정보나 기회를 나눌 수 있는 인맥이 있다.'},
+  {a:6,id:34,t:'힘들 때 마음을 털어놓고 이야기할 수 있는 사람이 있다.'},
+  {a:7,id:35,t:'현재 주거 환경이 안정적이며 생활하는 데 큰 어려움이 없다.'},
+  {a:7,id:36,t:'편안하게 쉬고 재충전할 수 있는 나만의 공간이 있다.'},
+  {a:7,id:37,t:'향후 주거비 변화(월세·대출 등)에 대한 대비를 하고 있다.'},
+  {a:7,id:38,t:'생활공간의 변화(이사·축소 등)가 필요한 경우 유연하게 대처할 수 있다.'},
+  {a:7,id:39,t:'생활공간이 나의 심리적 안정과 재기 의욕에 영향을 준다는 것을 안다.'},
+];
+
+let allData=[],filteredData=[];
+let sortKey='ts';let sortDir='desc';let searchStr='';
+let radarChart=null;let detailChart=null;
+let anonMode=true;
+let filterDateVal='',filterRegionVal='',filterBizVal='';
+
+function sc(s){return s>=4?'#2E7D5A':s>=3?'#B06000':'#B03030';}
+function scBg(s){return s>=4?'#EAF5EE':s>=3?'#FDF3E3':'#FAEAEA';}
+
+function checkLogin(){
+  if(document.getElementById('pwIn').value===ADMIN_PW){
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('appWrap').classList.add('active');
+    loadData();
+  } else {
+    document.getElementById('pwErr').textContent='비밀번호가 틀렸습니다.';
+    document.getElementById('pwIn').value='';
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginPage').style.display!=='none')checkLogin();});
+function logout(){document.getElementById('loginPage').style.display='flex';document.getElementById('appWrap').classList.remove('active');allData=[];}
+
+async function loadData(){
+  const main=document.getElementById('mainContent');
+  main.innerHTML='<div class="spin"></div>';
+  allData=[];
+  try{
+    if(window._fbReady){
+      const snap=await window._getDocs(window._collection(window._db,'soho_results'));
+      snap.forEach(d=>allData.push({...d.data(),_docId:d.id}));
+      allData.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    }
+  }catch(e){main.innerHTML='<div class="empty">데이터 로드 오류: '+e.message+'</div>';return;}
+  updateLiveBanner();
+  buildFilterOptions();
+  applyFilter();
+}
+
+function updateLiveBanner(){
+  const n=allData.length;
+  document.getElementById('liveCount').textContent=n;
+  if(n>0){
+    const scores=allData.map(r=>r.total);
+    const avg=+(scores.reduce((a,b)=>a+b,0)/n).toFixed(1);
+    document.getElementById('liveAvg').textContent=avg;
+    document.getElementById('liveAvg').style.color=sc(avg);
+    document.getElementById('liveMax').textContent=Math.max(...scores).toFixed(1);
+    document.getElementById('liveMin').textContent=Math.min(...scores).toFixed(1);
+  }
+  document.getElementById('liveTime').textContent='마지막 업데이트: '+new Date().toLocaleTimeString('ko-KR');
+}
+
+function buildFilterOptions(){
+  const dates=[...new Set(allData.map(r=>r.dateOnly||r.date?.split(' ')[0]||'').filter(Boolean))].sort().reverse();
+  const regions=[...new Set(allData.map(r=>r.region||'').filter(Boolean))].sort();
+  const bizs=[...new Set(allData.map(r=>r.biz||'').filter(Boolean))].sort();
+
+  const dSel=document.getElementById('filterDate');
+  const curD=dSel.value;
+  dSel.innerHTML='<option value="">날짜 전체</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join('');
+  if(curD)dSel.value=curD;
+
+  const rSel=document.getElementById('filterRegion');
+  const curR=rSel.value;
+  rSel.innerHTML='<option value="">지역 전체</option>'+regions.map(r=>`<option value="${r}">${r}</option>`).join('');
+  if(curR)rSel.value=curR;
+
+  const bSel=document.getElementById('filterBiz');
+  const curB=bSel.value;
+  bSel.innerHTML='<option value="">업종 전체</option>'+bizs.map(b=>`<option value="${b}">${b}</option>`).join('');
+  if(curB)bSel.value=curB;
+}
+
+function applyFilter(){
+  filterDateVal=document.getElementById('filterDate').value;
+  filterRegionVal=document.getElementById('filterRegion').value;
+  filterBizVal=document.getElementById('filterBiz').value;
+
+  filteredData=allData.filter(r=>{
+    const dMatch=!filterDateVal||(r.dateOnly||r.date?.split(' ')[0]||'')===filterDateVal;
+    const rMatch=!filterRegionVal||(r.region||'')===filterRegionVal;
+    const bMatch=!filterBizVal||(r.biz||'')===filterBizVal;
+    return dMatch&&rMatch&&bMatch;
+  });
+
+  // highlight active filters
+  ['filterDate','filterRegion','filterBiz'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.toggle('filter-active',!!el.value);
+  });
+
+  const res=document.getElementById('filterResult');
+  if(filterDateVal||filterRegionVal||filterBizVal){
+    res.textContent=`필터 결과: ${filteredData.length}명 / 전체 ${allData.length}명`;
+    res.style.color='var(--primary)';
+  } else {
+    res.textContent=`전체 ${allData.length}명`;
+    res.style.color='var(--ink-light)';
+  }
+
+  if(!filteredData.length){
+    document.getElementById('mainContent').innerHTML='<div class="empty">선택한 조건에 해당하는 데이터가 없습니다.</div>';
+    return;
+  }
+  renderDashboard();
+}
+
+function clearFilter(){
+  document.getElementById('filterDate').value='';
+  document.getElementById('filterRegion').value='';
+  document.getElementById('filterBiz').value='';
+  applyFilter();
+}
+
+function toggleAnon(){
+  anonMode=!anonMode;
+  const btn=document.getElementById('anonBtn');
+  btn.textContent=anonMode?'👁 익명 ON':'👁 익명 OFF';
+  btn.classList.toggle('on',anonMode);
+  renderTableOnly();
+}
+function displayName(name,idx){return anonMode?'참가자 '+(idx+1):name;}
+
+function renderDashboard(){
+  const data=filteredData;
+  if(!data.length)return;
+  const grp=AREAS.map((_,i)=>+(data.reduce((s,r)=>s+(r.scores?r.scores[i]:0),0)/data.length).toFixed(1));
+  const oa=+(grp.reduce((a,b)=>a+b,0)/8).toFixed(1);
+  const maxIdx=grp.indexOf(Math.max(...grp)),minIdx=grp.indexOf(Math.min(...grp));
+  const qAvg=QS_ORIG.map(q=>{
+    const v=data.filter(r=>r.qScores&&r.qScores[q.id]>0).map(r=>r.qScores[q.id]);
+    return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;
+  });
+  const qWithAvg=QS_ORIG.map((q,i)=>({...q,avg:qAvg[i]})).filter(q=>q.avg!==null);
+  const qSorted=[...qWithAvg].sort((a,b)=>a.avg-b.avg);
+  const bottom5=qSorted.slice(0,5),top5=[...qSorted].reverse().slice(0,5);
+  const scores=data.map(r=>r.total);
+  window._qAvg=qAvg; window._filteredResults=data;
+
+  let h='';
+
+  // ALERT
+  h+=`<div class="alert-banner" style="background:${scBg(grp[minIdx])};border-color:${grp[minIdx]<3?'#F0A0A0':grp[minIdx]<4?'#F0C070':'#A8D8BC'}">
+    <div class="ab-icon">${grp[minIdx]<3?'🔴':grp[minIdx]<4?'⚠️':'✅'}</div>
+    <div>
+      <div class="ab-title" style="color:${sc(grp[minIdx])}">오늘 집중 지원 영역 — ${AREAS[minIdx].l}. ${AREAS[minIdx].n} (그룹 평균 ${grp[minIdx]}점)</div>
+      <div class="ab-desc" style="color:${sc(grp[minIdx])}">이 그룹에서 가장 취약한 영역입니다. 수업에서 집중적으로 다루기를 권장합니다.</div>
+    </div>
+  </div>`;
+
+  // METRICS (5개)
+  h+=`<div class="metrics-row" style="margin-top:1.5rem">
+    <div class="metric-card"><div class="metric-label">필터 응답자</div><div class="metric-value" style="color:var(--primary)">${data.length}명</div><div class="metric-sub">전체 ${allData.length}명 중</div></div>
+    <div class="metric-card"><div class="metric-label">전체 평균</div><div class="metric-value" style="color:${sc(oa)}">${oa}</div><div class="metric-sub">5점 만점</div></div>
+    <div class="metric-card"><div class="metric-label">최고 점수</div><div class="metric-value" style="color:var(--good)">${Math.max(...scores)}</div><div class="metric-sub">최우수</div></div>
+    <div class="metric-card"><div class="metric-label">최저 점수</div><div class="metric-value" style="color:var(--danger)">${Math.min(...scores)}</div><div class="metric-sub">집중 지원</div></div>
+    <div class="metric-card"><div class="metric-label">평균 이상</div><div class="metric-value" style="color:var(--primary-mid)">${data.filter(r=>r.total>=oa).length}명</div><div class="metric-sub">전체 평균 초과</div></div>
+  </div>`;
+
+  // TABS
+  h+=`<div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')">📊 전체 현황</button>
+    <button class="tab" onclick="switchTab('detail')">👥 응답자 목록</button>
+    <button class="tab" onclick="switchTab('analysis')">🔍 문항 분석</button>
+    <button class="tab" onclick="switchTab('dateview')">📅 날짜별 보기</button>
+  </div>`;
+
+  // TAB: OVERVIEW
+  h+=`<div class="tab-content active" id="tab-overview">
+    <div class="hl-grid">
+      <div class="hl-box" style="background:var(--good-bg);border-color:var(--good-border)"><div style="font-size:11px;font-weight:700;color:var(--good);margin-bottom:6px;letter-spacing:.5px">✅ 가장 강한 영역</div><div style="font-size:20px;font-weight:700;color:var(--good)">${AREAS[maxIdx].l}. ${AREAS[maxIdx].n}</div><div style="font-size:13px;color:var(--good);margin-top:3px">그룹 평균 ${grp[maxIdx]}점</div></div>
+      <div class="hl-box" style="background:var(--danger-bg);border-color:var(--danger-border)"><div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:6px;letter-spacing:.5px">🔴 집중 지원 영역</div><div style="font-size:20px;font-weight:700;color:var(--danger)">${AREAS[minIdx].l}. ${AREAS[minIdx].n}</div><div style="font-size:13px;color:var(--danger);margin-top:3px">그룹 평균 ${grp[minIdx]}점</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">그룹 레이더 차트</div><div class="card-sub">전체 응답자 영역별 평균</div><div class="chart-wrap"><canvas id="radarC"></canvas></div></div>
+      <div class="card"><div class="card-title">영역별 평균 점수</div><div class="card-sub">8개 영역 5점 만점</div>
+        ${grp.map((s,i)=>`<div class="s-row"><span class="s-nm">${AREAS[i].l}. ${AREAS[i].n}</span><div class="s-bar-bg"><div class="s-bar" style="width:${s/5*100}%;background:${sc(s)}"></div></div><span class="s-val" style="color:${sc(s)}">${s}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">🔴 집중 지원 문항 TOP 5</div><div class="card-sub">평균이 가장 낮은 문항 — 수업에서 우선 다루기 권장</div>
+        ${bottom5.map((q,i)=>`<div class="qlist-row"><div class="qlist-rank" style="color:${sc(q.avg)}">${i+1}</div><div style="flex:1"><div class="qlist-txt">${q.t}</div><div class="qlist-meta">${AREAS[q.a].l}. ${AREAS[q.a].n}</div></div><div class="qlist-score" style="color:${sc(q.avg)}">${q.avg}</div></div>`).join('')}
+      </div>
+      <div class="card"><div class="card-title">✅ 강점 문항 TOP 5</div><div class="card-sub">평균이 가장 높은 문항</div>
+        ${top5.map((q,i)=>`<div class="qlist-row"><div class="qlist-rank" style="color:${sc(q.avg)}">${i+1}</div><div style="flex:1"><div class="qlist-txt">${q.t}</div><div class="qlist-meta">${AREAS[q.a].l}. ${AREAS[q.a].n}</div></div><div class="qlist-score" style="color:${sc(q.avg)}">${q.avg}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  // TAB: DETAIL
+  h+=`<div class="tab-content" id="tab-detail">
+    <div class="card">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="searchInput" placeholder="이름 검색..." oninput="filterTable()" value="${searchStr}">
+        <button class="sort-btn ${sortKey==='total'&&sortDir==='desc'?'active':''}" onclick="setSortTable('total','desc')">점수 높은순</button>
+        <button class="sort-btn ${sortKey==='total'&&sortDir==='asc'?'active':''}" onclick="setSortTable('total','asc')">점수 낮은순</button>
+        <button class="sort-btn ${sortKey==='ts'&&sortDir==='desc'?'active':''}" onclick="setSortTable('ts','desc')">최신순</button>
+        <button class="sort-btn ${sortKey==='ts'&&sortDir==='asc'?'active':''}" onclick="setSortTable('ts','asc')">오래된순</button>
+        <button class="sort-btn ${sortKey==='name'&&sortDir==='asc'?'active':''}" onclick="setSortTable('name','asc')">이름순</button>
+        <div class="count-badge" id="countBadge">총 ${data.length}명</div>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>이름</th><th>지역</th><th>업종</th><th>진단 일시</th><th>종합 평균</th>
+            ${AREAS.map(a=>`<th>${a.l}.${a.n}</th>`).join('')}
+            <th>상세</th><th>삭제</th>
+          </tr></thead>
+          <tbody id="respTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  // TAB: ANALYSIS
+  h+=`<div class="tab-content" id="tab-analysis">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">영역별 문항 상세 분석</div>
+      <div class="card-sub">영역 탭 선택 → 5개 문항 그룹 평균 확인</div>
+      <div class="area-tabs" id="areaTabs2">
+        ${AREAS.map((ar,i)=>`<button onclick="selectAreaTab2(${i})" id="atab2-${i}" style="color:${ar.c};border-color:${ar.c}55" class="area-tab">${ar.l}. ${ar.n}</button>`).join('')}
+      </div>
+      <div id="areaQDetail2"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">전체 40문항 평균 순위 (낮은순)</div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr><th>순위</th><th>문항 내용</th><th>영역</th><th>평균</th></tr></thead>
+          <tbody>${qSorted.map((q,i)=>`<tr><td style="font-weight:700;color:${sc(q.avg)}">${i+1}</td><td style="max-width:400px;word-break:keep-all">${q.t}</td><td><span style="font-size:12px;padding:2px 8px;border-radius:999px;background:${AREAS[q.a].c}20;color:${AREAS[q.a].c};font-weight:600">${AREAS[q.a].l}. ${AREAS[q.a].n}</span></td><td><span class="score-pill" style="background:${scBg(q.avg)};color:${sc(q.avg)}">${q.avg}점</span></td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  // TAB: DATE VIEW
+  const byDate={};
+  data.forEach(r=>{
+    const d=r.dateOnly||r.date?.split(' ')[0]||'날짜 미상';
+    if(!byDate[d])byDate[d]=[];
+    byDate[d].push(r);
+  });
+  const sortedDates=Object.keys(byDate).sort().reverse();
+  h+=`<div class="tab-content" id="tab-dateview"><div class="card">
+    <div class="card-title" style="margin-bottom:.5rem">날짜별 응답 현황</div>
+    <div class="card-sub">교육 날짜별로 참가자와 점수를 확인할 수 있어요</div>`;
+  sortedDates.forEach(d=>{
+    const group=byDate[d];
+    const avg=+(group.reduce((s,r)=>s+r.total,0)/group.length).toFixed(1);
+    const regions=[...new Set(group.map(r=>r.region||'').filter(Boolean))].join('·')||'-';
+    h+=`<div class="date-group-header">
+      <span>📅 ${d} · ${regions}</span>
+      <span class="date-group-count">${group.length}명 · 평균 <span style="color:${sc(avg)};font-weight:700">${avg}점</span></span>
+    </div>
+    <table class="tbl" style="margin-bottom:12px">
+      <thead><tr><th>이름</th><th>지역</th><th>업종</th><th>종합</th>${AREAS.map(a=>`<th>${a.l}</th>`).join('')}<th>상세</th></tr></thead>
+      <tbody>${group.map((r,idx)=>{
+        const origIdx=allData.indexOf(r);
+        const name=displayName(r.name,origIdx);
+        return`<tr><td style="font-weight:700">${name}</td><td>${r.region||'-'}</td><td>${r.biz||'-'}</td><td><span class="score-pill" style="background:${scBg(r.total)};color:${sc(r.total)}">${r.total}</span></td>${(r.scores||[]).map(s=>`<td style="color:${sc(s)};font-weight:600;text-align:center">${s}</td>`).join('')}<td><button class="btn-detail" onclick="showDetail(${origIdx})">상세</button></td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  });
+  h+='</div></div>';
+
+  document.getElementById('mainContent').innerHTML=h;
+  setTimeout(()=>{
+    if(radarChart)radarChart.destroy();
+    radarChart=makeRadar('radarC',grp);
+    renderTableOnly();
+    selectAreaTab2(0);
+  },80);
+}
+
+function renderTableOnly(){
+  const tbody=document.getElementById('respTbody');
+  const badge=document.getElementById('countBadge');
+  if(!tbody)return;
+  let data=[...filteredData];
+  if(searchStr) data=data.filter((r,i)=>anonMode?('참가자'+(i+1)).includes(searchStr):r.name?.includes(searchStr));
+  data.sort((a,b)=>{
+    if(sortKey==='name') return sortDir==='asc'?a.name.localeCompare(b.name):b.name.localeCompare(a.name);
+    if(sortKey==='total') return sortDir==='asc'?a.total-b.total:b.total-a.total;
+    return sortDir==='asc'?(a.ts||0)-(b.ts||0):(b.ts||0)-(a.ts||0);
+  });
+  if(badge) badge.textContent='총 '+data.length+'명';
+  tbody.innerHTML=data.map((r,dispIdx)=>{
+    const origIdx=allData.indexOf(r);
+    const name=displayName(r.name,origIdx);
+    return`<tr>
+      <td style="font-weight:700">${name}</td>
+      <td><span class="tag-pill" style="background:var(--primary-light);color:var(--primary)">${r.region||'-'}</span></td>
+      <td><span class="tag-pill" style="background:#F5F0FF;color:#7B4F9E">${r.biz||'-'}</span></td>
+      <td style="color:var(--ink-light);font-size:12px">${r.date}</td>
+      <td><span class="score-pill" style="background:${scBg(r.total)};color:${sc(r.total)}">${r.total}점</span></td>
+      ${(r.scores||[]).map(s=>`<td style="color:${sc(s)};font-weight:600;text-align:center">${s}</td>`).join('')}
+      <td><button class="btn-detail" onclick="showDetail(${origIdx})">상세</button></td>
+      <td><button class="btn-del" onclick="deleteResult('${r._docId||r.name}','${r.name}')">삭제</button></td>
+    </tr>`;
+  }).join('');
+}
+function filterTable(){searchStr=document.getElementById('searchInput')?.value||'';renderTableOnly();}
+function setSortTable(key,dir){sortKey=key;sortDir=dir;document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');renderTableOnly();}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id)?.classList.add('active');
+  const idx={'overview':0,'detail':1,'analysis':2,'dateview':3}[id];
+  document.querySelectorAll('.tab')[idx]?.classList.add('active');
+  if(id==='detail')renderTableOnly();
+}
+
+function selectAreaTab2(idx){
+  AREAS.forEach((ar,i)=>{const t=document.getElementById('atab2-'+i);if(!t)return;if(i===idx){t.style.background=ar.c;t.style.color='#fff';t.style.borderColor=ar.c;}else{t.style.background='#fff';t.style.color=ar.c;t.style.borderColor=ar.c+'55';}});
+  const el=document.getElementById('areaQDetail2');if(!el)return;
+  const qAvg=window._qAvg||[];
+  const qs=QS_ORIG.filter(q=>q.a===idx).sort((a,b)=>(qAvg[a.id]||0)-(qAvg[b.id]||0));
+  el.innerHTML=`<table class="tbl"><thead><tr><th>문항 내용</th><th style="width:140px">그룹 평균</th></tr></thead><tbody>`+
+    qs.map(q=>{const avg=qAvg[q.id];if(!avg)return'';return`<tr><td style="word-break:keep-all">${q.t}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;background:var(--line);border-radius:999px;overflow:hidden"><div style="width:${avg/5*100}%;height:100%;background:${sc(avg)};border-radius:999px"></div></div><span style="font-size:14px;font-weight:700;color:${sc(avg)};width:28px;text-align:right">${avg}</span></div></td></tr>`;}).join('')+
+  `</tbody></table>`;
+}
+
+function makeRadar(id,scores){
+  const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return null;
+  return new Chart(ctx,{type:'radar',
+    data:{labels:AREAS.map(a=>a.l+'.'+a.n),datasets:[{data:scores,borderColor:'#1B3F6E',backgroundColor:'rgba(27,63,110,0.08)',borderWidth:2,pointBackgroundColor:scores.map(s=>sc(s)),pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:10},backdropColor:'transparent',color:'#9CA3AF'},grid:{color:'rgba(0,0,0,0.06)'},pointLabels:{font:{size:11,weight:'600'},color:'#4A4A4A',padding:8},angleLines:{color:'rgba(0,0,0,0.06)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'점'}}}}
+  });
+}
+
+function showDetail(idx){
+  const r=allData[idx];if(!r)return;
+  const name=displayName(r.name,idx);
+  document.getElementById('modalTitle').textContent=name+'님 상세 결과';
+  let b=`<div style="text-align:center;padding:.75rem 0 1.5rem;border-bottom:1px solid var(--line);margin-bottom:1.25rem">
+    <div style="font-size:12px;color:var(--ink-light)">${r.date} · ${r.region||''} · ${r.biz||''}</div>
+    <div style="font-size:44px;font-weight:900;color:${sc(r.total)};margin:.25rem 0;letter-spacing:-2px">${r.total}</div>
+    <div style="font-size:14px;color:var(--ink-light)">종합 평균</div>
+  </div><div class="modal-chart-wrap"><canvas id="detailC"></canvas></div>`;
+  r.scores?.forEach((s,i)=>{const c=sc(s);b+=`<div class="s-row"><span class="s-nm" style="font-size:13px">${AREAS[i].l}. ${AREAS[i].n}</span><div class="s-bar-bg"><div class="s-bar" style="width:${s/5*100}%;background:${c}"></div></div><span class="s-val" style="font-size:15px;color:${c}">${s}</span></div>`;});
+  if(r.qScores){
+    b+=`<div style="margin-top:1.25rem;font-size:15px;font-weight:700;margin-bottom:1rem">문항별 응답 상세</div>`;
+    AREAS.forEach((ar,ai)=>{
+      b+=`<div style="font-size:13px;font-weight:700;color:${ar.c};margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--line)">${ar.l}. ${ar.n}</div>`;
+      QS_ORIG.filter(q=>q.a===ai).forEach(q=>{const v=r.qScores[q.id]||0;const c=sc(v);b+=`<div style="padding:8px 0;border-bottom:1px solid #F5F5F5;display:flex;gap:10px;align-items:flex-start"><div style="font-size:12px;line-height:1.5;flex:1;color:#4A4A4A;word-break:keep-all">${q.t}</div><div style="font-size:14px;font-weight:700;color:${c};flex-shrink:0;min-width:32px;text-align:right">${v}점</div></div>`;});
+    });
+  }
+  document.getElementById('modalBody').innerHTML=b;
+  document.getElementById('modalOv').classList.add('open');
+  setTimeout(()=>{if(detailChart)detailChart.destroy();detailChart=makeRadar('detailC',r.scores);},80);
+}
+function closeModal(e){if(e.target===document.getElementById('modalOv'))document.getElementById('modalOv').classList.remove('open');}
+
+function showQR(){
+  document.getElementById('qrOv').classList.add('open');
+  const el=document.getElementById('qrCode');
+  if(!el.querySelector('canvas')&&!el.querySelector('img')){
+    new QRCode(el,{text:STUDENT_URL,width:200,height:200,colorDark:'#1B3F6E',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+  }
+}
+function closeQR(e){if(e.target===document.getElementById('qrOv'))document.getElementById('qrOv').classList.remove('open');}
+
+async function deleteResult(docId,name){
+  if(!confirm(`"${name}"님의 결과를 삭제하시겠습니까?`))return;
+  try{
+    await window._deleteDoc(window._doc(window._db,'soho_results',docId));
+    allData=allData.filter(r=>(r._docId||r.name)!==docId);
+    filteredData=filteredData.filter(r=>(r._docId||r.name)!==docId);
+    updateLiveBanner();
+    buildFilterOptions();
+    renderDashboard();
+  }catch(e){alert('삭제 오류: '+e.message);}
+}
+
+function exportCSV(){
+  if(!filteredData.length){alert('데이터가 없습니다.');return;}
+  const headers=['이름','지역','업종','진단일시','종합평균',...AREAS.map(a=>a.l+'.'+a.n),...QS_ORIG.map(q=>'Q'+String(q.id+1).padStart(2,'0'))];
+  const rows=filteredData.map(r=>[r.name,r.region||'',r.biz||'',r.date,r.total,...(r.scores||[]),...(r.qScores?QS_ORIG.map(q=>r.qScores[q.id]||0):new Array(40).fill(''))]);
+  const csv='\uFEFF'+[headers,...rows].map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const filterInfo=(filterDateVal||filterRegionVal||filterBizVal)?`_${[filterDateVal,filterRegionVal,filterBizVal].filter(Boolean).join('_')}`:'';
+  a.download=`소상공인새출발진단${filterInfo}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'').replace('.','')}.csv`;
+  a.click();URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
 

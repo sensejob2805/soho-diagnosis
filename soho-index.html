@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>소상공인 생애설계 진단</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyB8g1dCEwJ5FrE9c6a4hVEONQdOwTsQ8hU",
+    authDomain: "nohoo-diagnosis.firebaseapp.com",
+    projectId: "nohoo-diagnosis",
+    storageBucket: "nohoo-diagnosis.firebasestorage.app",
+    messagingSenderId: "719141943540",
+    appId: "1:719141943540:web:c9b29f194ba451a0e186a1"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db=db; window._fbReady=true;
+  window._getDocs=getDocs; window._doc=doc; window._setDoc=setDoc; window._collection=collection;
+</script>
+<style>
+:root{
+  --primary:#1B3F6E;--primary-mid:#2A5FA0;--primary-light:#E8F0FA;
+  --gold:#E8A020;--gold-light:#FDF3E0;
+  --ink:#1A1A1A;--ink-mid:#4A4A4A;--ink-light:#8A8A8A;
+  --line:#E8E8E8;--bg:#F5F6F8;--white:#FFFFFF;
+  --good:#2E7D5A;--good-bg:#EAF5EE;
+  --warn:#B06000;--warn-bg:#FDF3E3;
+  --danger:#B03030;--danger-bg:#FAEAEA;
+  --r:12px;--r-lg:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}
+
+/* WELCOME */
+.w-hero{
+  background:linear-gradient(160deg,#0D2444 0%,var(--primary) 55%,#2A5FA0 100%);
+  padding:3rem 1.5rem 2rem;position:relative;overflow:hidden;
+}
+.w-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(232,160,32,.1);}
+.w-hero::after{content:'';position:absolute;bottom:-40px;left:-40px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.04);}
+.w-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.5px;padding:5px 12px;border-radius:999px;background:rgba(232,160,32,.2);color:var(--gold);margin-bottom:1.25rem;position:relative;z-index:1}
+.w-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.w-title{font-size:28px;font-weight:900;line-height:1.3;color:#fff;margin-bottom:.75rem;position:relative;z-index:1;letter-spacing:-.5px}
+.w-title em{display:block;font-size:14px;font-weight:400;color:rgba(255,255,255,.5);font-style:normal;margin-bottom:.4rem;letter-spacing:.3px}
+.w-desc{font-size:15px;color:rgba(255,255,255,.65);line-height:1.75;position:relative;z-index:1}
+.w-divider{height:1px;background:rgba(255,255,255,.1);margin:1.5rem 0;position:relative;z-index:1}
+.w-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
+.w-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:.9rem 1.1rem}
+.w-stat-n{font-size:24px;font-weight:900;color:#fff;line-height:1}
+.w-stat-l{font-size:12px;color:rgba(255,255,255,.5);margin-top:.25rem}
+.w-form{padding:1.5rem;background:var(--white);flex:1}
+.w-label{font-size:15px;font-weight:700;margin-bottom:.6rem;display:block;color:var(--ink)}
+.w-input{width:100%;padding:16px 16px;border:1.5px solid var(--line);border-radius:var(--r);font-size:20px;background:var(--white);color:var(--ink);outline:none;font-family:inherit;transition:border-color .2s}
+.w-input:focus{border-color:var(--primary)}
+.w-select{width:100%;padding:16px 16px;border:1.5px solid var(--line);border-radius:var(--r);font-size:17px;background:var(--white);color:var(--ink);outline:none;font-family:inherit;appearance:none;cursor:pointer;transition:border-color .2s}
+.w-select:focus{border-color:var(--primary)}
+.w-hint{font-size:13px;color:var(--ink-light);margin-top:.4rem;line-height:1.5}
+.w-field{margin-bottom:1.1rem}
+.err{font-size:14px;color:var(--danger);margin-top:.4rem;display:none}
+.btn-primary{width:100%;margin-top:1.25rem;padding:20px;background:linear-gradient(135deg,var(--primary),var(--primary-mid));color:#fff;border:none;border-radius:var(--r);font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(27,63,110,.3);transition:opacity .15s}
+.btn-primary:active{opacity:.85}
+
+/* QUIZ */
+.q-header{background:var(--white);border-bottom:1px solid var(--line);padding:1rem 1.5rem;position:sticky;top:0;z-index:10}
+.q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.area-pill{font-size:13px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.2px}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.q-cnt{font-size:13px;color:var(--ink-light);font-weight:500}
+.q-pct{font-size:13px;color:var(--primary);font-weight:700}
+.prog{height:4px;background:var(--line);border-radius:999px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--primary),var(--gold));border-radius:999px;transition:width .5s}
+.q-body{flex:1;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1.1rem}
+.q-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:1.75rem 1.5rem}
+.q-num{font-size:11px;color:var(--ink-light);letter-spacing:1px;margin-bottom:.75rem;font-weight:500;text-transform:uppercase}
+.q-txt{font-size:19px;line-height:1.75;font-weight:500;color:var(--ink);word-break:keep-all}
+.scale-wrap{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:1.25rem}
+.scale-labels{display:flex;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.sl-item{font-size:11px;color:var(--ink-light);text-align:center;flex:1;line-height:1.4;font-weight:500}
+.scale-btns{display:flex;gap:8px}
+.sc-btn{flex:1;border:1.5px solid var(--line);border-radius:var(--r);padding:16px 4px 12px;background:var(--white);display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all .15s;font-family:inherit;min-height:70px;justify-content:center}
+.sc-btn:active{transform:scale(.93)}
+.sc-num{font-size:26px;font-weight:900;line-height:1}
+.sc-btn.s5{border-color:#2E7D5A;background:#EAF5EE}.sc-btn.s5 .sc-num{color:#1E6040}
+.sc-btn.s4{border-color:#4A9E6A;background:#F0F9F2}.sc-btn.s4 .sc-num{color:#2D7050}
+.sc-btn.s3{border-color:#B8860B;background:#FDF8E8}.sc-btn.s3 .sc-num{color:#8B6510}
+.sc-btn.s2{border-color:#C07030;background:#FDF0E3}.sc-btn.s2 .sc-num{color:#9A5520}
+.sc-btn.s1{border-color:#B03030;background:#FAEAEA}.sc-btn.s1 .sc-num{color:#8B2020}
+.sc-btn.s5.sel{background:#2E7D5A;border-color:#1E6040}.sc-btn.s5.sel .sc-num{color:#fff}
+.sc-btn.s4.sel{background:#4A9E6A;border-color:#2D7050}.sc-btn.s4.sel .sc-num{color:#fff}
+.sc-btn.s3.sel{background:#B8860B;border-color:#8B6510}.sc-btn.s3.sel .sc-num{color:#fff}
+.sc-btn.s2.sel{background:#C07030;border-color:#9A5520}.sc-btn.s2.sel .sc-num{color:#fff}
+.sc-btn.s1.sel{background:#B03030;border-color:#8B2020}.sc-btn.s1.sel .sc-num{color:#fff}
+.sc-btn.sel{transform:scale(1.07)}
+.sel-fb{text-align:center;font-size:14px;font-weight:700;min-height:22px;margin-top:8px;color:var(--primary)}
+.q-nav{display:flex;gap:10px;padding:1rem 1.5rem 2.5rem;background:var(--bg)}
+.btn-back{flex:0 0 64px;height:64px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--white);cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.btn-next{flex:1;height:64px;border:none;border-radius:var(--r);background:linear-gradient(135deg,var(--primary),var(--primary-mid));color:#fff;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-next:disabled{opacity:.25;cursor:not-allowed}
+
+/* RESULT */
+.r-hero{background:linear-gradient(160deg,#0D2444,var(--primary));padding:2.5rem 1.5rem 2rem;text-align:center;position:relative;overflow:hidden}
+.r-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(232,160,32,.08)}
+.r-name{font-size:14px;color:rgba(255,255,255,.55);margin-bottom:.35rem}
+.r-ttl{font-size:21px;font-weight:700;color:#fff;margin-bottom:1.25rem;letter-spacing:-.3px}
+.r-score-box{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:var(--r-lg);padding:1.25rem 3rem}
+.r-score-n{font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px}
+.r-score-l{font-size:13px;color:rgba(255,255,255,.5);margin-top:.4rem}
+.saved-ok{background:var(--good-bg);border:1px solid #A8D8BC;border-radius:var(--r);padding:16px;font-size:15px;color:var(--good);line-height:1.55;margin:1rem 1.5rem 0;display:none}
+.r-body{padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1.25rem}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r-lg);padding:1.5rem}
+.card-ttl{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:.3rem}
+.card-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.25rem;line-height:1.5}
+.chart-wrap{position:relative;height:270px;margin-bottom:.5rem}
+.guide-box{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:1.25rem}
+.g-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.g-row:last-child{border-bottom:none}
+.g-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.g-txt{font-size:14px;flex:1;font-weight:500}.g-rng{font-size:13px;color:var(--ink-light)}
+.s-row{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.s-nm{font-size:14px;color:var(--ink-mid);flex:0 0 84px;font-weight:500}
+.s-bar-bg{flex:1;height:10px;background:var(--line);border-radius:999px;overflow:hidden}
+.s-bar{height:100%;border-radius:999px}
+.s-val{font-size:17px;font-weight:700;width:30px;text-align:right}
+.fb-item{padding:16px 0;border-bottom:1px solid var(--line)}
+.fb-item:last-child{border-bottom:none;padding-bottom:0}
+.fb-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fb-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.fb-area{font-size:13px;color:var(--ink-light);font-weight:600}
+.fb-score{font-size:15px;font-weight:700;margin-left:auto}
+.fb-weak{font-size:13px;line-height:1.55;background:var(--danger-bg);color:var(--danger);border-radius:8px;padding:8px 12px;margin-bottom:8px;word-break:keep-all;border-left:3px solid var(--danger)}
+.fb-msg{font-size:14px;line-height:1.65;color:var(--ink-mid);word-break:keep-all}
+.r-actions{padding:0 1.5rem 3rem;display:flex;flex-direction:column;gap:10px}
+
+/* REPORT */
+.rep-header{background:linear-gradient(135deg,#0D2444,var(--primary));padding:1.25rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+
+/* PW */
+.pw-wrap{padding:2rem 1.5rem;background:var(--white);flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.pw-icon{width:64px;height:64px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 1.5rem}
+.pw-input{width:100%;max-width:260px;padding:18px;border:1.5px solid var(--line);border-radius:var(--r);font-size:24px;text-align:center;letter-spacing:8px;background:var(--white);color:var(--ink);outline:none;font-family:inherit}
+.pw-input:focus{border-color:var(--primary)}
+.pw-err{font-size:14px;color:var(--danger);margin-top:.75rem;display:none}
+.pw-btn{width:100%;max-width:260px;margin-top:1.25rem;padding:18px;background:linear-gradient(135deg,var(--primary),var(--primary-mid));color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:700;cursor:pointer;font-family:inherit}
+
+.spin{width:34px;height:34px;border:2.5px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:sp .75s linear infinite;margin:3rem auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media print{
+  body{background:#fff!important}
+  #sReport{display:flex!important}
+  .screen:not(#sReport){display:none!important}
+  button{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="sw" class="screen active">
+  <div class="w-hero">
+    <div class="w-badge">소상공인 새출발 지원</div>
+    <h1 class="w-title">
+      <em>새로운 시작을 위한 첫 걸음</em>
+      생애영역별<br>새출발 진단
+    </h1>
+    <p class="w-desc">8가지 영역에서 현재 상태를 점검하고<br>새출발을 위한 맞춤 방향을 찾아보세요.</p>
+    <div class="w-divider"></div>
+    <div class="w-stats">
+      <div class="w-stat"><div class="w-stat-n">8</div><div class="w-stat-l">진단 영역</div></div>
+      <div class="w-stat"><div class="w-stat-n">40</div><div class="w-stat-l">진단 문항</div></div>
+    </div>
+  </div>
+  <div class="w-form">
+    <div class="w-field">
+      <label class="w-label">이름을 입력해 주세요</label>
+      <input type="text" id="nameIn" class="w-input" placeholder="예) 홍길동" maxlength="10" autocomplete="off">
+    </div>
+    <div class="w-field">
+      <label class="w-label">오늘 날짜</label>
+      <div style="padding:16px;background:#F8F7F5;border:1.5px solid var(--line);border-radius:var(--r);font-size:18px;font-weight:700;color:var(--ink-mid)" id="dateDisplay"></div>
+      <input type="hidden" id="dateIn">
+      <p class="w-hint">날짜는 자동으로 기록됩니다.</p>
+    </div>
+    <div class="w-field">
+      <label class="w-label">지역</label>
+      <div style="padding:16px;background:#F8F7F5;border:1.5px solid var(--line);border-radius:var(--r);font-size:18px;font-weight:700;color:var(--primary)">📍 천안</div>
+      <input type="hidden" id="regionIn" value="천안">
+    </div>
+    <div id="inputErr" class="err">모든 항목을 입력해 주세요.</div>
+    <button class="btn-primary" onclick="startQuiz()">진단 시작하기 →</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="sq" class="screen">
+  <div class="q-header">
+    <div class="q-top">
+      <span class="area-pill" id="aPill"></span>
+    </div>
+    <div class="q-meta">
+      <span class="q-cnt" id="qCnt"></span>
+      <span class="q-pct" id="qPct"></span>
+    </div>
+    <div class="prog"><div class="prog-f" id="pF" style="width:2.5%"></div></div>
+  </div>
+  <div class="q-body">
+    <div class="q-card">
+      <div class="q-num" id="qNum"></div>
+      <div class="q-txt" id="qTxt"></div>
+    </div>
+    <div class="scale-wrap">
+      <div class="scale-labels">
+        <span class="sl-item">매우<br>그렇다</span>
+        <span class="sl-item">그렇다</span>
+        <span class="sl-item">보통</span>
+        <span class="sl-item">아니다</span>
+        <span class="sl-item">전혀<br>아니다</span>
+      </div>
+      <div class="scale-btns">
+        <button class="sc-btn s5" id="btn5" onclick="pick(5)"><span class="sc-num">5</span></button>
+        <button class="sc-btn s4" id="btn4" onclick="pick(4)"><span class="sc-num">4</span></button>
+        <button class="sc-btn s3" id="btn3" onclick="pick(3)"><span class="sc-num">3</span></button>
+        <button class="sc-btn s2" id="btn2" onclick="pick(2)"><span class="sc-num">2</span></button>
+        <button class="sc-btn s1" id="btn1" onclick="pick(1)"><span class="sc-num">1</span></button>
+      </div>
+      <div class="sel-fb" id="selFb"></div>
+    </div>
+  </div>
+  <div class="q-nav">
+    <button class="btn-back" onclick="prevQ()">←</button>
+    <button class="btn-next" id="bNext" onclick="nextQ()" disabled>다음 문항</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="sr" class="screen">
+  <div class="r-hero">
+    <div class="r-name" id="rName"></div>
+    <div class="r-ttl">생애영역별 새출발 진단 결과</div>
+    <div class="r-score-box">
+      <div class="r-score-n" id="totalN">--</div>
+      <div class="r-score-l">종합 평균 (5점 만점)</div>
+    </div>
+  </div>
+  <div id="savedOk" class="saved-ok"></div>
+  <div class="r-body">
+    <!-- 종합 공감 메시지 -->
+    <div id="totalMsgCard" style="display:none"></div>
+    <div class="guide-box">
+      <div style="font-size:14px;font-weight:700;margin-bottom:.75rem">점수 해석 기준</div>
+      <div class="g-row"><div class="g-dot" style="background:var(--good)"></div><div class="g-txt">준비가 잘 되어 있어요</div><div class="g-rng">4.0점 이상</div></div>
+      <div class="g-row"><div class="g-dot" style="background:var(--warn)"></div><div class="g-txt">보완이 필요해요</div><div class="g-rng">3.0 ~ 3.9점</div></div>
+      <div class="g-row"><div class="g-dot" style="background:var(--danger)"></div><div class="g-txt">집중 지원이 필요해요</div><div class="g-rng">3.0점 미만</div></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">레이더 차트</div>
+      <div class="card-sub">바깥 꼭짓점에 가까울수록 잘 준비된 영역이에요</div>
+      <div class="chart-wrap"><canvas id="rC"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">영역별 점수</div>
+      <div class="card-sub">각 영역 5문항의 평균 점수 (5점 만점)</div>
+      <div id="sBars"></div>
+    </div>
+    <div class="card" id="fbCard"><div class="card-ttl" style="margin-bottom:1rem">영역별 맞춤 피드백</div></div>
+    <!-- 재진단 안내 -->
+    <div id="recheckCard" style="display:none"></div>
+  </div>
+  <div class="r-actions">
+    <button class="btn-next" style="width:100%;height:64px;font-size:17px" onclick="saveResult()" id="saveBtn">📤 결과 저장하기</button>
+    <button onclick="captureAndShare()" id="captureBtn" style="width:100%;height:60px;border:none;border-radius:var(--r);background:#FEE500;color:#1A1A1A;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#1A1A1A"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.76 1.74 5.19 4.36 6.63l-.88 3.28a.5.5 0 0 0 .74.55l3.9-2.59c.61.09 1.24.13 1.88.13 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+      결과 이미지 저장 → 카카오톡으로 보내기
+    </button>
+    <button onclick="showFullReport()" style="width:100%;height:52px;border:1.5px solid var(--primary);border-radius:var(--r);background:var(--white);color:var(--primary);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📋 전체 결과 보기</button>
+    <button onclick="goHome()" style="width:100%;height:52px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--white);color:var(--ink-light);font-size:15px;cursor:pointer;font-family:inherit">🏠 처음으로</button>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="sReport" class="screen">
+  <div class="rep-header">
+    <button onclick="show('sr')" style="width:44px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0">←</button>
+    <div>
+      <div style="font-size:16px;font-weight:700;color:#fff">전체 결과 보고서</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:1px">위아래로 스크롤하며 확인하세요</div>
+    </div>
+    <button onclick="savePDF()" style="margin-left:auto;padding:8px 14px;border:none;border-radius:10px;background:var(--gold);color:#1A1A00;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🖨️ PDF</button>
+  </div>
+  <div id="reportBody" style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1.25rem;background:var(--bg)"></div>
+  <div style="padding:0 1.5rem 3rem">
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:1.25rem;text-align:center">
+      <div style="font-size:15px;font-weight:700;margin-bottom:.5rem">📸 화면 캡처 방법</div>
+      <div style="font-size:14px;color:var(--ink-light);line-height:1.7">
+        <div>• 갤럭시: 전원 + 볼륨 아래 동시에</div>
+        <div>• 아이폰: 측면 버튼 + 볼륨 위 동시에</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PW -->
+<div id="spw" class="screen">
+  <div class="w-hero" style="flex:0 0 auto">
+    <div class="w-badge">강사 전용</div>
+    <h1 class="w-title">교육자 대시보드</h1>
+    <p class="w-desc">강사 전용 분석 화면입니다.</p>
+  </div>
+  <div class="pw-wrap">
+    <div class="pw-icon">🔐</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:.5rem">비밀번호를 입력해 주세요</div>
+    <input type="password" id="pwIn" class="pw-input" placeholder="••••" maxlength="10" autocomplete="off">
+    <div id="pwErr" class="pw-err">비밀번호가 틀렸습니다.</div>
+    <button class="pw-btn" onclick="checkPw()">입장하기</button>
+    <button style="font-size:14px;color:var(--ink-light);margin-top:1rem;cursor:pointer;background:none;border:none;font-family:inherit" onclick="goHome()">← 돌아가기</button>
+  </div>
+</div>
+
+<script>
+const ADMIN_PW='1234';
+const AREAS=[
+  {n:'심리·정서 회복',l:'가',c:'#7B4F9E'},{n:'재무 재건',l:'나',c:'#1A6B8A'},
+  {n:'건강관리',l:'다',c:'#2A5C45'},{n:'재기 준비',l:'라',c:'#C0392B'},
+  {n:'여가·취미',l:'마',c:'#E67E22'},{n:'새출발 설계',l:'바',c:'#1B3F6E'},
+  {n:'관계관리',l:'사',c:'#27AE60'},{n:'주거·공간',l:'아',c:'#8E44AD'},
+];
+const SEL_LABELS={5:'5점 — 매우 그렇다',4:'4점 — 그렇다',3:'3점 — 보통',2:'2점 — 아니다',1:'1점 — 전혀 아니다'};
+const SEL_COLORS={5:'#1E6040',4:'#2D7050',3:'#8B6510',2:'#9A5520',1:'#8B2020'};
+
+const Q_FB={
+  0:'새로운 출발을 준비하는 마음이 아직 충분히 자리잡지 못한 상태임. 지금 이 자리에 앉아 진단을 시작한 것 자체가 변화의 첫걸음임을 고려해 볼 시점임.',
+  1:'앞으로의 삶에 대한 희망이 잘 보이지 않는 상태임. 작은 기대 하나부터 찾아보는 것을 고려해 볼 시점임.',
+  2:'주변 시선에 민감하게 반응하는 상태임. 남의 평가보다 나 자신의 판단을 신뢰하는 연습을 고려해 볼 시점임.',
+  3:'자기 자신에 대한 믿음이 낮아진 상태임. 지금까지 해온 것들을 돌아보며 나의 가능성을 다시 발견해 볼 시점임.',
+  4:'감정 회복 방법이 없는 상태임. 산책·대화·취미 등 나에게 맞는 작은 회복 루틴을 만들어 볼 시점임.',
+  5:'재무 상황 파악이 되어 있지 않은 상태임. 현재 수입·지출·자산을 한 번 정리해 보는 것을 고려해 볼 시점임.',
+  6:'기본 생활 재원이 불안정한 상태임. 당장 필요한 생활비를 어떻게 마련할지 우선적으로 살펴볼 시점임.',
+  7:'이용 가능한 정책 지원을 아직 모르는 상태임. 지자체·소상공인 지원기관의 새출발 지원 프로그램을 확인해 볼 시점임.',
+  8:'새로운 수입 계획이 아직 없는 상태임. 재취업·재창업·직업훈련 중 어떤 방향이 나에게 맞는지 탐색해 볼 시점임.',
+  9:'지출 조정이 아직 이루어지지 않은 상태임. 꼭 필요한 지출과 줄일 수 있는 지출을 구분해 보는 것을 고려해 볼 시점임.',
+  10:'어려운 상황에서 건강 관리가 소홀해진 상태임. 식사·수면부터 규칙적으로 챙기는 것이 재기 에너지의 기반임을 고려해 볼 시점임.',
+  11:'기본 생활 습관이 흐트러진 상태임. 하루 세 끼 식사와 7시간 수면부터 다시 챙겨보는 것을 고려해 볼 시점임.',
+  12:'마음 건강 돌봄이 필요한 상태임. 혼자 버티기보다 가까운 사람과 이야기를 나누거나 상담을 활용해 볼 시점임.',
+  13:'신체 활동이 부족한 상태임. 하루 30분 가벼운 걷기부터 시작해 보는 것을 고려해 볼 시점임.',
+  14:'건강 유지를 위한 준비가 부족한 상태임. 가입된 보험과 지역 건강 지원 서비스를 확인해 볼 시점임.',
+  15:'앞으로의 방향이 아직 보이지 않는 상태임. 재취업·재창업·직업훈련 중 나에게 맞는 방향을 천천히 탐색해 볼 시점임.',
+  16:'그동안의 경험과 강점이 아직 정리되지 않은 상태임. 내가 잘했던 것, 배운 것을 하나씩 써보는 작업을 고려해 볼 시점임.',
+  17:'역량 개발을 위한 노력이 부족한 상태임. 무료·저비용 교육 프로그램을 찾아보는 것을 고려해 볼 시점임.',
+  18:'지원 기관 활용이 아직 이루어지지 않은 상태임. 지역 새출발 지원센터나 취업 연계 프로그램을 확인해 볼 시점임.',
+  19:'구체적인 계획이 없는 상태임. "6개월 후 나는 무엇을 하고 있을까"를 한 문장으로 써보는 것부터 시작해 볼 시점임.',
+  20:'나만의 여가·취미 활동이 없는 상태임. 과거에 즐거웠던 것 하나를 다시 시작해 보는 것을 고려해 볼 시점임.',
+  21:'여가 활동을 통한 활력 회복이 부족한 상태임. 작은 즐거움이라도 의도적으로 만들어 보는 것을 고려해 볼 시점임.',
+  22:'함께할 사람이 주변에 부족한 상태임. 관심사가 같은 모임이나 지역 프로그램 참여를 고려해 볼 시점임.',
+  23:'좋아하는 일의 가능성을 아직 발견하지 못한 상태임. 즐기는 것과 잘하는 것의 교집합을 찾아보는 것을 고려해 볼 시점임.',
+  24:'여가를 위한 시간 여유가 없는 상태임. 하루 중 나를 위한 시간을 30분이라도 확보해 볼 시점임.',
+  25:'새로운 삶의 방향이 아직 그려지지 않은 상태임. 지금까지의 경험을 발판으로 삼아 작은 목표 하나부터 세워볼 시점임.',
+  26:'삶의 목표와 비전이 불명확한 상태임. "1년 후 나는 어떤 모습이고 싶은가"를 구체적으로 써보는 것을 고려해 볼 시점임.',
+  27:'가족과의 솔직한 소통이 부족한 상태임. 앞으로의 생활에 대해 가족과 이야기하는 자리를 만들어 볼 시점임.',
+  28:'일상의 균형이 흔들리고 있는 상태임. 하루 루틴을 간단하게라도 만들어 규칙성을 회복해 볼 시점임.',
+  29:'변화에 적응하는 데 어려움이 있는 상태임. 작은 변화 하나씩 받아들이는 연습을 고려해 볼 시점임.',
+  30:'가족의 지지와 이해가 부족한 상태임. 나의 상황과 감정을 가족과 솔직하게 나누는 시간을 가져볼 시점임.',
+  31:'도움을 주고받을 수 있는 지인이 부족한 상태임. 오랫동안 연락하지 않은 지인에게 먼저 연락해 볼 시점임.',
+  32:'고립감이 커지고 있는 상태임. 비슷한 상황의 사람들과 만나는 모임이나 커뮤니티에 참여해 볼 시점임.',
+  33:'정보를 나눌 수 있는 인맥이 부족한 상태임. 지역 모임·온라인 커뮤니티를 통해 연결을 넓혀볼 시점임.',
+  34:'마음을 털어놓을 사람이 없는 상태임. 가까운 지인에게 먼저 연락하거나 전문 상담을 활용해 볼 시점임.',
+  35:'주거 안정이 불확실한 상태임. 현재 주거 비용과 이용 가능한 지원 제도를 확인해 볼 시점임.',
+  36:'재충전할 수 있는 나만의 공간이 없는 상태임. 집 안 한 곳을 정리하고 나만의 쉼터로 만들어 볼 시점임.',
+  37:'주거 변화에 대한 준비가 되어 있지 않은 상태임. 앞으로 어디서 어떻게 살 것인지 가족과 미리 이야기해 볼 시점임.',
+  38:'주거 환경 변화 대처가 어려운 상태임. 변화 가능성을 열린 마음으로 미리 생각해 두는 것을 고려해 볼 시점임.',
+  39:'생활공간의 중요성에 대한 인식이 부족한 상태임. 채광·정리·청결 등 생활환경을 개선하면 심리적 안정에 도움이 될 수 있음.',
+};
+
+const QS_ORIG=[
+  {a:0,id:0,t:'최근의 어려움을 딛고 새로운 출발을 준비하는 마음이 생겨나고 있다.'},
+  {a:0,id:1,t:'앞으로의 삶에 대한 희망과 가능성을 느끼고 있다.'},
+  {a:0,id:2,t:'주변의 시선이나 평가에 지나치게 흔들리지 않는 편이다.'},
+  {a:0,id:3,t:'나 자신의 가치와 가능성을 믿고 있다.'},
+  {a:0,id:4,t:'힘든 감정이 들 때 나만의 회복 방법을 갖고 있다.'},
+  {a:1,id:5,t:'현재 나의 재무 상황(수입·지출·자산)을 파악하고 있다.'},
+  {a:1,id:6,t:'당장의 생활을 유지할 수 있는 기본적인 재원이 마련되어 있다.'},
+  {a:1,id:7,t:'생활 안정을 위한 정책 지원이나 제도를 알고 있다.'},
+  {a:1,id:8,t:'새로운 수입을 만들기 위한 계획이나 구상을 하고 있다.'},
+  {a:1,id:9,t:'생활 수준과 지출 방식을 상황에 맞게 조정하고 있다.'},
+  {a:2,id:10,t:'어려운 상황 속에서도 건강을 챙기려 노력하고 있다.'},
+  {a:2,id:11,t:'규칙적인 식사와 수면 등 기본적인 생활 습관을 유지하고 있다.'},
+  {a:2,id:12,t:'마음 건강(스트레스·불안)을 관리하고 돌보고 있다.'},
+  {a:2,id:13,t:'몸을 움직이는 활동이나 운동을 꾸준히 하고 있다.'},
+  {a:2,id:14,t:'앞으로의 건강 유지를 위한 준비를 하고 있다.'},
+  {a:3,id:15,t:'앞으로 무엇을 하며 살아갈지 방향을 탐색하고 있다.'},
+  {a:3,id:16,t:'그동안의 경험과 나의 강점을 정리해 보고 있다.'},
+  {a:3,id:17,t:'새로운 출발에 필요한 역량을 개발하기 위해 노력하고 있다.'},
+  {a:3,id:18,t:'새출발을 도와주는 기관이나 프로그램을 알고 있거나 활용하고 있다.'},
+  {a:3,id:19,t:'새로운 일을 시작하기 위한 구체적인 계획을 세우고 있다.'},
+  {a:4,id:20,t:'나만의 여가나 취미 활동을 즐기고 있다.'},
+  {a:4,id:21,t:'취미나 여가 활동을 통해 활력과 즐거움을 느끼고 있다.'},
+  {a:4,id:22,t:'여가나 취미를 함께 즐길 수 있는 사람이 주변에 있다.'},
+  {a:4,id:23,t:'내가 좋아하는 것이 앞으로 소득이나 새로운 역할로 연결될 가능성을 본다.'},
+  {a:4,id:24,t:'여가·취미를 위한 시간과 여유를 마련하고 있다.'},
+  {a:5,id:25,t:'지난 경험을 발판 삼아 새로운 삶의 방향을 그려가고 있다.'},
+  {a:5,id:26,t:'앞으로의 삶에 대한 구체적인 목표나 비전을 가지고 있다.'},
+  {a:5,id:27,t:'가족과 함께 앞으로의 생활에 대해 솔직하게 이야기하고 있다.'},
+  {a:5,id:28,t:'상황이 바뀌더라도 일상의 균형을 유지하려 노력하고 있다.'},
+  {a:5,id:29,t:'새로운 삶의 방식에 유연하게 적응해 가고 있다.'},
+  {a:6,id:30,t:'가족이나 가까운 사람들이 나를 이해하고 지지해 주고 있다.'},
+  {a:6,id:31,t:'어려울 때 연락하고 도움을 주고받을 수 있는 지인이 있다.'},
+  {a:6,id:32,t:'사람들과의 관계를 잘 유지하며 고립되지 않으려 노력하고 있다.'},
+  {a:6,id:33,t:'새로운 출발에 도움이 될 정보나 기회를 나눌 수 있는 인맥이 있다.'},
+  {a:6,id:34,t:'힘들 때 마음을 털어놓고 이야기할 수 있는 사람이 있다.'},
+  {a:7,id:35,t:'현재 주거 환경이 안정적이며 생활하는 데 불편함이 없다.'},
+  {a:7,id:36,t:'편안하게 쉬고 재충전할 수 있는 나만의 공간이 있다.'},
+  {a:7,id:37,t:'앞으로의 주거 환경 변화에 대해 미리 생각해 두고 있다.'},
+  {a:7,id:38,t:'주거 환경이 변화하더라도 유연하게 대처할 수 있다.'},
+  {a:7,id:39,t:'내가 사는 공간이 마음의 안정과 활력에 영향을 준다는 것을 알고 있다.'},
+];
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let curQ=0,ans=[],QS=[],uName='',uRegion='',uBiz='',rChart=null;
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function goHome(){show('sw');}
+
+// 날짜 자동 입력
+window.addEventListener('load',function(){
+  const now=new Date();
+  const yyyy=now.getFullYear();
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const dd=String(now.getDate()).padStart(2,'0');
+  const dateStr=yyyy+'.'+mm+'.'+dd;
+  document.getElementById('dateDisplay').textContent='📅 '+dateStr;
+  document.getElementById('dateIn').value=dateStr;
+
+  // 강사 접속 (상단 5번 탭)
+  const hero=document.querySelector('.w-hero');
+  if(hero)hero.addEventListener('click',function(){
+    tapCount++;clearTimeout(tapTimer);tapTimer=setTimeout(()=>{tapCount=0;},2000);
+    if(tapCount>=5){tapCount=0;goAdminPw();}
+  });
+});
+
+function startQuiz(){
+  const n=document.getElementById('nameIn').value.trim();
+  const d=document.getElementById('dateIn').value;
+  const r=document.getElementById('regionIn').value;
+  if(!n){document.getElementById('inputErr').style.display='block';return;}
+  document.getElementById('inputErr').style.display='none';
+  uName=n+'('+d+')'; uRegion=r; uBiz='';
+  QS=shuffle(QS_ORIG); ans=new Array(40).fill(null); curQ=0;
+  renderQ(); show('sq');
+}
+
+function renderQ(){
+  const q=QS[curQ],ar=AREAS[q.a];
+  const pill=document.getElementById('aPill');
+  pill.textContent=ar.l+'. '+ar.n; pill.style.background=ar.c+'22'; pill.style.color=ar.c;
+  document.getElementById('qCnt').textContent=(curQ+1)+' / 40';
+  const pct=Math.round(((curQ+1)/40)*100);
+  document.getElementById('qPct').textContent=pct+'% 완료';
+  document.getElementById('pF').style.width=pct+'%';
+  document.getElementById('qNum').textContent='문항 '+String(curQ+1).padStart(2,'0');
+  document.getElementById('qTxt').textContent=q.t;
+  [5,4,3,2,1].forEach(n=>{const b=document.getElementById('btn'+n);b.className='sc-btn s'+n;if(ans[curQ]===n)b.classList.add('sel');});
+  const fb=document.getElementById('selFb');
+  if(ans[curQ]!==null){fb.textContent=SEL_LABELS[ans[curQ]];fb.style.color=SEL_COLORS[ans[curQ]];}else fb.textContent='';
+  const bn=document.getElementById('bNext');
+  bn.disabled=ans[curQ]===null; bn.textContent=curQ===39?'결과 보기 →':'다음 문항 →';
+}
+function pick(s){ans[curQ]=s;renderQ();setTimeout(()=>nextQ(),350);}
+function nextQ(){if(ans[curQ]===null)return;if(curQ<39){curQ++;renderQ();}else showResult();}
+function prevQ(){if(curQ>0){curQ--;renderQ();}else show('sw');}
+
+function calcScores(){return AREAS.map((_,i)=>Math.round((QS.reduce((acc,q,qi)=>q.a===i?acc+(ans[qi]||0):acc,0)/5)*10)/10);}
+function calcQScores(){const r=new Array(40).fill(0);QS.forEach((q,qi)=>{r[q.id]=ans[qi]||0;});return r;}
+function sc(s){return s>=4?'#2E7D5A':s>=3?'#B06000':'#B03030';}
+function scBg(s){return s>=4?'#EAF5EE':s>=3?'#FDF3E3':'#FAEAEA';}
+
+// 종합 점수별 공감 메시지
+function getTotalMessage(tot, scores){
+  const maxIdx=scores.indexOf(Math.max(...scores));
+  const minIdx=scores.indexOf(Math.min(...scores));
+  const strongArea=AREAS[maxIdx].l+'. '+AREAS[maxIdx].n;
+  if(tot>=4.0){
+    return {
+      icon:'🌱',
+      bg:'#EAF5EE',color:'#1E6040',border:'#A8D8BC',
+      title:'새출발 준비가 잘 되어 있어요',
+      msg:'전반적으로 안정적인 상태예요. 특히 <strong>'+strongArea+'</strong> 영역의 강점을 중심으로 새로운 방향을 구체화해 나가기에 좋은 시점이에요. 지금의 에너지를 유지하면서 한 걸음씩 나아가 보세요.',
+      action:'이번 주 실천 제안: 가장 자신 있는 영역을 활용해 작은 목표 하나를 써보세요.'
+    };
+  } else if(tot>=3.0){
+    return {
+      icon:'🌿',
+      bg:'#FDF3E3',color:'#8B4500',border:'#F0C070',
+      title:'조금씩 앞으로 나아가고 있어요',
+      msg:'지금은 준비 중인 상태예요. 완전히 준비된 상태가 아니어도 괜찮아요. <strong>'+strongArea+'</strong> 영역이 상대적으로 잘 되어 있으니, 이것을 발판 삼아 취약한 부분을 하나씩 채워나가 보세요.',
+      action:'이번 주 실천 제안: 가장 쉽게 시작할 수 있는 취약 영역 하나를 골라 작은 행동 하나만 해보세요.'
+    };
+  } else {
+    return {
+      icon:'💙',
+      bg:'#EEF2FF',color:'#1E3A7B',border:'#B0C0F0',
+      title:'지금 이 자리에 오신 것 자체가 용기예요',
+      msg:'지금은 많이 힘드신 시기일 거예요. 그럼에도 이 진단을 해보신 것은 변화를 원한다는 마음의 신호예요. 지금 당장 모든 걸 해결하지 않아도 돼요. <strong>'+strongArea+'</strong> 영역에서 보이는 가능성을 출발점으로 삼아보세요.',
+      action:'이번 주 실천 제안: 오늘 하루 가장 쉬운 것 하나만 해보세요. 작은 행동이 변화의 시작이에요.'
+    };
+  }
+}
+
+// 강점 영역 칭찬 메시지
+const STRONG_MSG={
+  0:'감정을 조절하고 변화에 적응하는 힘이 있어요. 새출발 과정에서 흔들릴 때 이 회복력이 가장 큰 자산이 될 거예요.',
+  1:'재무 상황을 파악하고 대비하는 능력이 있어요. 이 안정감이 새로운 도전을 위한 든든한 기반이 돼요.',
+  2:'건강을 챙기는 습관이 잡혀 있어요. 몸과 마음의 건강은 어떤 새출발에서도 가장 중요한 자원이에요.',
+  3:'앞으로의 방향을 탐색하고 준비하는 힘이 있어요. 이 실행력이 새출발을 현실로 만들어 줄 거예요.',
+  4:'나를 위한 시간과 즐거움을 만드는 능력이 있어요. 이 여유로움이 지속 가능한 새출발의 에너지원이에요.',
+  5:'앞으로의 삶을 설계하는 눈이 있어요. 방향이 보이는 사람은 반드시 그곳에 도달해요.',
+  6:'주변 사람들과 관계를 유지하는 힘이 있어요. 이 연결망이 새출발 과정에서 가장 큰 지지대가 될 거예요.',
+  7:'생활 공간을 안정적으로 유지하고 있어요. 안전한 공간은 마음의 여유를 만들고 재기의 토대가 돼요.',
+};
+
+// 즉시 실행 행동 제안
+const ACTION_TIP={
+  0:'오늘 저녁 10분, 지금 드는 감정을 종이에 써보세요. 감정을 인식하는 것이 회복의 시작이에요.',
+  1:'이번 주 안에 수입·지출 현황을 메모 한 장에 정리해 보세요.',
+  2:'오늘부터 하루 세 끼 식사 시간을 정해두고 지켜보세요.',
+  3:'내가 잘했던 일 3가지를 종이에 적어보세요. 경험은 사라지지 않아요.',
+  4:'오늘 30분, 좋아했던 것을 다시 해보세요. 즐거움도 연습이 필요해요.',
+  5:'"1년 후 나는 ○○하고 있다"를 한 문장으로 써보세요.',
+  6:'오랫동안 연락 못한 지인 한 명에게 문자를 보내보세요.',
+  7:'집 안 한 곳을 정리하고 나만의 편안한 자리를 만들어 보세요.',
+};
+
+function showResult(){
+  const scores=calcScores(),qScores=calcQScores();
+  const tot=Math.round((scores.reduce((a,b)=>a+b,0)/8)*10)/10;
+  document.getElementById('rName').textContent=uName.split('(')[0]+'님의';
+  document.getElementById('totalN').textContent=tot.toFixed(1);
+  document.getElementById('totalN').style.color=sc(tot);
+  document.getElementById('savedOk').style.display='none';
+
+  const bars=document.getElementById('sBars');bars.innerHTML='';
+  scores.forEach((s,i)=>{const c=sc(s);bars.innerHTML+=`<div class="s-row"><span class="s-nm">${AREAS[i].l}. ${AREAS[i].n}</span><div class="s-bar-bg"><div class="s-bar" style="width:${s/5*100}%;background:${c}"></div></div><span class="s-val" style="color:${c}">${s}</span></div>`;});
+
+  // ① 종합 공감 메시지 카드
+  const totalMsg=getTotalMessage(tot,scores);
+  const totalCard=document.getElementById('totalMsgCard');
+  totalCard.style.display='block';
+  totalCard.innerHTML=`
+    <div style="background:${totalMsg.bg};border:1px solid ${totalMsg.border};border-radius:var(--r-lg);padding:1.5rem">
+      <div style="font-size:28px;margin-bottom:.75rem">${totalMsg.icon}</div>
+      <div style="font-size:17px;font-weight:700;color:${totalMsg.color};margin-bottom:.6rem">${totalMsg.title}</div>
+      <div style="font-size:15px;color:${totalMsg.color};line-height:1.75;margin-bottom:1rem">${totalMsg.msg}</div>
+      <div style="background:rgba(255,255,255,.6);border-radius:10px;padding:.75rem 1rem;font-size:14px;color:${totalMsg.color};font-weight:600;line-height:1.6">💡 ${totalMsg.action}</div>
+    </div>`;
+
+  // ② 영역별 맞춤 피드백 (강점 칭찬 강화 + 취약 행동 제안)
+  const fb=document.getElementById('fbCard');
+  fb.innerHTML='<div class="card-ttl" style="margin-bottom:1rem">영역별 맞춤 피드백</div>';
+  scores.forEach((s,i)=>{
+    const areaQs=QS_ORIG.filter(q=>q.a===i);
+    const minQ=areaQs.reduce((m,q)=>(qScores[q.id]<qScores[m.id]?q:m));
+    const maxQ=areaQs.reduce((m,q)=>(qScores[q.id]>qScores[m.id]?q:m));
+    const minScore=qScores[minQ.id];
+    const c=sc(s),bg=scBg(s);
+    const icon=s>=4?'✅':s>=3?'⚠️':'🔴';
+    let h=`<div class="fb-item"><div class="fb-top"><div class="fb-icon" style="background:${bg}">${icon}</div><div><div class="fb-area">${AREAS[i].l}. ${AREAS[i].n}</div></div><div class="fb-score" style="color:${c}">${s}점</div></div>`;
+    if(s>=4){
+      // 강점: 충분한 칭찬 + 새출발 연계 의미
+      h+=`<div class="fb-msg" style="color:#1E6040;line-height:1.7">${STRONG_MSG[i]}</div>
+          <div style="background:#D1FAE5;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:13px;color:#065F46;font-weight:600">💡 이번 주 실천: ${ACTION_TIP[i]}</div>`;
+    } else {
+      // 취약: 공감 + 피드백 + 즉시 행동 제안
+      h+=`<div class="fb-weak">특히 "${minQ.t.substring(0,22)}…" 부분을 함께 살펴봐요 (${minScore}점)</div>
+          <div class="fb-msg">${Q_FB[minQ.id]}</div>
+          <div style="background:rgba(255,255,255,.8);border:1px solid ${s<3?'#F0A0A0':'#F0C070'};border-radius:8px;padding:8px 12px;margin-top:8px;font-size:13px;color:${c};font-weight:600">💡 이번 주 실천: ${ACTION_TIP[i]}</div>`;
+    }
+    h+='</div>';fb.innerHTML+=h;
+  });
+
+  // ③ 재진단 안내
+  const recheckCard=document.getElementById('recheckCard');
+  recheckCard.style.display='block';
+  recheckCard.innerHTML=`
+    <div style="background:#F0F4FF;border:1px solid #C0CFFF;border-radius:var(--r-lg);padding:1.25rem;text-align:center">
+      <div style="font-size:20px;margin-bottom:.5rem">🔄</div>
+      <div style="font-size:15px;font-weight:700;color:#1B3F6E;margin-bottom:.4rem">3개월 후 다시 진단해 보세요</div>
+      <div style="font-size:13px;color:#4A5FA0;line-height:1.65">새출발은 하루아침에 이루어지지 않아요.<br>3개월 후 같은 진단을 다시 해보면<br>내가 얼마나 성장했는지 눈으로 확인할 수 있어요. 💪</div>
+    </div>`;
+
+  show('sr');
+  setTimeout(()=>{if(rChart)rChart.destroy();rChart=makeRadar('rC',scores);},80);
+}
+
+function makeRadar(id,scores){
+  const ctx=document.getElementById(id)?.getContext('2d');if(!ctx)return null;
+  return new Chart(ctx,{type:'radar',
+    data:{labels:AREAS.map(a=>a.l+'.'+a.n),datasets:[{data:scores,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()||'#1B3F6E',backgroundColor:'rgba(27,63,110,0.08)',borderWidth:2,pointBackgroundColor:scores.map(s=>sc(s)),pointRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:10},backdropColor:'transparent',color:'#9CA3AF'},grid:{color:'rgba(0,0,0,0.06)'},pointLabels:{font:{size:11,weight:'600'},color:'#4A4A4A',padding:8},angleLines:{color:'rgba(0,0,0,0.06)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'점'}}}}
+  });
+}
+
+async function saveResult(){
+  const btn=document.getElementById('saveBtn');
+  btn.disabled=true;btn.textContent='저장 중...';
+  const scores=calcScores(),qScores=calcQScores();
+  const tot=Math.round((scores.reduce((a,b)=>a+b,0)/8)*10)/10;
+  const dateStr=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\. /g,'-').replace('.','');
+  const rec={name:uName,region:uRegion,biz:uBiz,date:new Date().toLocaleString('ko-KR'),dateOnly:dateStr,scores,qScores,total:tot,ts:Date.now()};
+  try{
+    if(window._fbReady) await window._setDoc(window._doc(window._db,'soho_results',uName+'_'+Date.now()),rec);
+    const ok=document.getElementById('savedOk');
+    ok.innerHTML='✅ <strong>'+uName+'님</strong>, 수고하셨어요!<br>진단 결과가 강사님께 전달되었습니다. 😊';
+    ok.style.display='block';
+    btn.textContent='✅ 저장 완료';
+    setTimeout(()=>{ok.style.display='none';btn.disabled=false;btn.textContent='📤 결과 저장하기';},4000);
+  }catch(e){btn.disabled=false;btn.textContent='📤 결과 저장하기';alert('저장 오류: '+e.message);}
+}
+
+async function captureAndShare(){
+  const btn=document.getElementById('captureBtn');
+  btn.disabled=true;btn.innerHTML='⏳ 이미지 만드는 중...';
+  showFullReport();
+  await new Promise(r=>setTimeout(r,800));
+  try{
+    const el=document.getElementById('reportBody');
+    const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#F5F6F8',scrollY:0,width:el.offsetWidth,height:el.scrollHeight,windowHeight:el.scrollHeight});
+    const link=document.createElement('a');
+    link.download=uName+'_새출발진단결과.png';
+    link.href=canvas.toDataURL('image/png');link.click();
+    await new Promise(r=>setTimeout(r,500));
+    alert('✅ 이미지가 저장되었어요!\n\n카카오톡에서 나에게 보내기\n① 카카오톡 열기 → ② 내 채팅방 선택\n③ 하단 + → 앨범 → 이미지 선택 → 전송!');
+  }catch(e){alert('이미지 저장 오류가 발생했어요.\n화면 캡처를 이용해 주세요.');}
+  show('sr');
+  btn.disabled=false;
+  btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="#1A1A1A"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.76 1.74 5.19 4.36 6.63l-.88 3.28a.5.5 0 0 0 .74.55l3.9-2.59c.61.09 1.24.13 1.88.13 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg> 결과 이미지 저장 → 카카오톡으로 보내기';
+}
+
+function showFullReport(){
+  const scores=calcScores(),qScores=calcQScores();
+  const tot=Math.round((scores.reduce((a,b)=>a+b,0)/8)*10)/10;
+  const maxIdx=scores.indexOf(Math.max(...scores)),minIdx=scores.indexOf(Math.min(...scores));
+  let h=`<div style="background:linear-gradient(135deg,#0D2444,var(--primary));border-radius:var(--r-lg);padding:1.5rem;color:#fff;text-align:center">
+    <div style="font-size:14px;color:rgba(255,255,255,.65);margin-bottom:.3rem">${uName}님 · ${uRegion} · ${uBiz}</div>
+    <div style="font-size:52px;font-weight:900;color:${sc(tot)};letter-spacing:-2px;line-height:1">${tot.toFixed(1)}</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:.3rem">종합 평균 (5점 만점)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1.25rem">
+      <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:.75rem"><div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:4px">✅ 가장 강한 영역</div><div style="font-size:15px;font-weight:700">${AREAS[maxIdx].l}. ${AREAS[maxIdx].n}</div><div style="font-size:13px;color:rgba(255,255,255,.7)">${scores[maxIdx]}점</div></div>
+      <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:.75rem"><div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:4px">🔴 집중 지원 영역</div><div style="font-size:15px;font-weight:700">${AREAS[minIdx].l}. ${AREAS[minIdx].n}</div><div style="font-size:13px;color:rgba(255,255,255,.7)">${scores[minIdx]}점</div></div>
+    </div>
+  </div>`;
+  h+=`<div class="card"><div class="card-ttl" style="margin-bottom:1rem">영역별 점수</div>`;
+  scores.forEach((s,i)=>{const c=sc(s);h+=`<div class="s-row"><span class="s-nm">${AREAS[i].l}. ${AREAS[i].n}</span><div class="s-bar-bg"><div class="s-bar" style="width:${s/5*100}%;background:${c}"></div></div><span class="s-val" style="color:${c}">${s}</span></div>`;});
+  h+=`</div><div class="card"><div class="card-ttl" style="margin-bottom:1rem">맞춤 피드백</div>`;
+  scores.forEach((s,i)=>{
+    const areaQs=QS_ORIG.filter(q=>q.a===i);
+    const minQ=areaQs.reduce((m,q)=>(qScores[q.id]<qScores[m.id]?q:m));
+    const c=sc(s),bg=scBg(s),icon=s>=4?'✅':s>=3?'⚠️':'🔴';
+    h+=`<div class="fb-item"><div class="fb-top"><div class="fb-icon" style="background:${bg}">${icon}</div><div><div class="fb-area">${AREAS[i].l}. ${AREAS[i].n}</div></div><div class="fb-score" style="color:${c}">${s}점</div></div>`;
+    if(s>=4)h+=`<div class="fb-msg" style="color:#1E6040">이 영역은 잘 준비되어 있어요. 이 강점을 새출발의 발판으로 연결해 보세요.</div>`;
+    else h+=`<div class="fb-weak">특히 "${minQ.t.substring(0,20)}…" (${qScores[minQ.id]}점)</div><div class="fb-msg">${Q_FB[minQ.id]}</div>`;
+    h+='</div>';
+  });
+  h+=`</div><div class="card"><div class="card-ttl" style="margin-bottom:1rem">문항별 응답 상세</div>`;
+  AREAS.forEach((ar,ai)=>{
+    h+=`<div style="font-size:13px;font-weight:700;color:${ar.c};margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--line)">${ar.l}. ${ar.n}</div>`;
+    QS_ORIG.filter(q=>q.a===ai).forEach(q=>{const v=qScores[q.id]||0;const c=sc(v);h+=`<div style="padding:8px 0;border-bottom:1px solid #F5F5F5;display:flex;gap:10px;align-items:flex-start"><div style="font-size:13px;line-height:1.5;flex:1;color:#4A4A4A;word-break:keep-all">${q.t}</div><div style="font-size:15px;font-weight:700;color:${c};flex-shrink:0;min-width:32px;text-align:right">${v}점</div></div>`;});
+  });
+  h+='</div>';
+  document.getElementById('reportBody').innerHTML=h;
+  show('sReport');window.scrollTo(0,0);
+}
+function savePDF(){showFullReport();setTimeout(()=>{alert('PDF 저장\n\n안드로이드: 브라우저 ⋮ → 공유 → 인쇄 → PDF 저장\n아이폰: 공유 버튼 → 프린트 → 두 손가락 확대 → PDF 저장');window.print();},300);}
+
+let tapCount=0,tapTimer=null;
+function goAdminPw(){show('spw');document.getElementById('pwIn').value='';document.getElementById('pwErr').style.display='none';}
+function checkPw(){if(document.getElementById('pwIn').value===ADMIN_PW){window.location.href='soho-admin.html';}else document.getElementById('pwErr').style.display='block';}
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('spw').classList.contains('active'))checkPw();});
+</script>
+</body>
+</html>
